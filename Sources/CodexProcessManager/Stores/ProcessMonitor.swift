@@ -14,19 +14,24 @@ final class ProcessMonitor: ObservableObject {
 
     private let preferences: AppPreferences
     private let provider: ProcessSnapshotProvider
+    private let resourceSampler: ResourceUsageSampling
     private let terminator: ProcessTerminator
     private let auditLogger: AuditLogging
     private var timer: Timer?
+    private var resourceTimer: Timer?
     private var startupRefreshTask: Task<Void, Never>?
+    private let resourceRefreshIntervalSeconds: TimeInterval = 2
 
     init(
         preferences: AppPreferences,
         provider: ProcessSnapshotProvider = ProcessSnapshotProvider(),
+        resourceSampler: ResourceUsageSampling = ProcessResourceSampler(),
         terminator: ProcessTerminator = ProcessTerminator(),
         auditLogger: AuditLogging = FileAuditLogger.default
     ) {
         self.preferences = preferences
         self.provider = provider
+        self.resourceSampler = resourceSampler
         self.terminator = terminator
         self.auditLogger = auditLogger
     }
@@ -47,6 +52,7 @@ final class ProcessMonitor: ObservableObject {
     func start() {
         guard timer == nil else { return }
         scheduleTimer()
+        scheduleResourceTimer()
         scheduleStartupRefresh()
     }
 
@@ -55,6 +61,8 @@ final class ProcessMonitor: ObservableObject {
         startupRefreshTask = nil
         timer?.invalidate()
         timer = nil
+        resourceTimer?.invalidate()
+        resourceTimer = nil
     }
 
     func togglePause() {
@@ -84,6 +92,7 @@ final class ProcessMonitor: ObservableObject {
             if selectedGroupID == nil || !newSnapshot.groups.contains(where: { $0.id == selectedGroupID }) {
                 selectedGroupID = newSnapshot.groups.first?.id
             }
+            refreshResourceUsage()
             lastActivity = mode == .fast
                 ? "已快速扫描 \(newSnapshot.groups.count) 组服务"
                 : "已扫描 \(newSnapshot.groups.count) 组服务"
@@ -176,6 +185,28 @@ final class ProcessMonitor: ObservableObject {
                 await self.refresh()
             }
         }
+    }
+
+    private func scheduleResourceTimer() {
+        resourceTimer = Timer.scheduledTimer(withTimeInterval: resourceRefreshIntervalSeconds, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                guard !self.isPaused else { return }
+                self.refreshResourceUsage()
+            }
+        }
+    }
+
+    private func refreshResourceUsage() {
+        let pids = snapshot.groups.flatMap { group in
+            group.processes.map(\.pid)
+        }
+        guard !pids.isEmpty else { return }
+
+        let usageByPID = resourceSampler.sample(pids: pids)
+        guard !usageByPID.isEmpty else { return }
+
+        snapshot = snapshot.updatingResourceUsage(usageByPID)
     }
 
     private func scheduleStartupRefresh() {

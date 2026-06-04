@@ -39,6 +39,8 @@ private struct GroupRowView: View {
 
                 Spacer()
 
+                GroupResourceBadge(cpu: group.totalCPU, memory: group.totalMemory)
+
                 RiskBadge(risk: group.risk)
             }
 
@@ -85,6 +87,35 @@ private struct GroupRowView: View {
         case .needsReview: return .blue
         case .protected: return .secondary
         }
+    }
+}
+
+private struct GroupResourceBadge: View {
+    let cpu: Double
+    let memory: Double
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            usageLine(title: "CPU", value: cpu)
+            usageLine(title: "内存", value: memory)
+        }
+        .font(.caption2.monospacedDigit())
+        .frame(width: 78, alignment: .trailing)
+        .accessibilityLabel("CPU \(format(cpu))，内存 \(format(memory))")
+    }
+
+    private func usageLine(title: String, value: Double) -> some View {
+        HStack(spacing: 4) {
+            Text(title)
+                .foregroundStyle(.tertiary)
+            Text(format(value))
+                .fontWeight(value >= 25 ? .semibold : .medium)
+                .foregroundStyle(value >= 25 ? Color.orange : Color.secondary)
+        }
+    }
+
+    private func format(_ value: Double) -> String {
+        String(format: "%.1f%%", value)
     }
 }
 

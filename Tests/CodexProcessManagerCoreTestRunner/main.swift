@@ -495,6 +495,29 @@ func testProcessSnapshotProviderFastScanSkipsLsof() {
     }
 }
 
+func testSnapshotResourceUpdatePreservesGroupMetadata() {
+    let group = ServiceGroup.fixture(
+        id: "dev-server",
+        risk: .needsReview,
+        processes: [
+            .fixture(pid: 8101, commandLine: "node server.js", listeningPorts: [4173])
+        ]
+    )
+    let snapshot = ProcessSnapshot(scannedAt: Date(), groups: [group])
+
+    let updated = snapshot.updatingResourceUsage([
+        8101: ProcessResourceUsage(pid: 8101, cpuPercent: 27.5, memoryPercent: 4.25)
+    ])
+
+    expect(updated.scannedAt == snapshot.scannedAt, "resource updates keep original scan timestamp")
+    expect(updated.groups.first?.id == "dev-server", "resource updates keep group id")
+    expect(updated.groups.first?.risk == .needsReview, "resource updates keep risk")
+    expect(updated.groups.first?.listeningPorts == [4173], "resource updates keep ports")
+    expect(updated.groups.first?.totalCPU == 27.5, "resource updates replace cpu")
+    expect(updated.groups.first?.totalMemory == 4.25, "resource updates replace memory")
+    expect(updated.summary.highCPUCount == 1, "resource updates rebuild summary from latest cpu")
+}
+
 extension ScanConfiguration {
     static var testDefault: ScanConfiguration {
         ScanConfiguration(
@@ -578,6 +601,7 @@ testKeepsRealNodeDevServerWhenInCodexWorkspaceAndListening()
 testShellCommandRunnerHandlesLargeOutputWithoutPipeDeadlock()
 testProcessSnapshotProviderUsesCwdLookupCooldownForAmbiguousDevProcesses()
 testProcessSnapshotProviderFastScanSkipsLsof()
+testSnapshotResourceUpdatePreservesGroupMetadata()
 
 if failures.isEmpty {
     print("All core behavior tests passed")

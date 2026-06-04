@@ -195,6 +195,7 @@ private struct ProcessDetailRow: View {
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
                 Spacer()
+                ProcessResourceBadge(cpu: process.cpuPercent, memory: process.memoryPercent)
                 if !process.listeningPorts.isEmpty {
                     Text(":\(process.listeningPorts.map(String.init).joined(separator: ", :"))")
                         .font(.caption.monospacedDigit())
@@ -217,11 +218,37 @@ private struct ProcessDetailRow: View {
                 Text("用户 \(process.user)")
                 Text("状态 \(process.state)")
                 Text("运行 \(process.elapsed)")
-                Text(String(format: "CPU %.1f%%", process.cpuPercent))
-                Text(String(format: "内存 %.1f%%", process.memoryPercent))
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
+    }
+}
+
+private struct ProcessResourceBadge: View {
+    let cpu: Double
+    let memory: Double
+
+    var body: some View {
+        HStack(spacing: 8) {
+            usageLine(title: "CPU", value: cpu)
+            usageLine(title: "内存", value: memory)
+        }
+        .font(.caption.monospacedDigit())
+        .accessibilityLabel("CPU \(format(cpu))，内存 \(format(memory))")
+    }
+
+    private func usageLine(title: String, value: Double) -> some View {
+        HStack(spacing: 3) {
+            Text(title)
+                .foregroundStyle(.tertiary)
+            Text(format(value))
+                .fontWeight(value >= 25 ? .semibold : .medium)
+                .foregroundStyle(value >= 25 ? Color.orange : Color.secondary)
+        }
+    }
+
+    private func format(_ value: Double) -> String {
+        String(format: "%.1f%%", value)
     }
 }

@@ -35,6 +35,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
+detach_existing_volumes() {
+  while IFS= read -r mount_dir; do
+    [[ -n "$mount_dir" ]] || continue
+    hdiutil detach "$mount_dir" -quiet >/dev/null 2>&1 \
+      || hdiutil detach "$mount_dir" -force -quiet >/dev/null 2>&1 \
+      || true
+  done < <(hdiutil info | awk -F '\t' -v prefix="/Volumes/$VOL_NAME" 'index($NF, prefix) == 1 { print $NF }')
+}
+
 if [[ "$SHOULD_BUILD" == "1" ]]; then
   "$ROOT_DIR/script/build_and_run.sh" --bundle
 fi
@@ -53,6 +62,7 @@ ln -s /Applications "$STAGING_DIR/Applications"
 cp "$INSTALL_README" "$STAGING_DIR/安装说明.txt"
 cp "$BACKGROUND_SOURCE" "$STAGING_DIR/.background/taskguard-dmg-background.png"
 
+detach_existing_volumes
 rm -f "$RW_DMG" "$FINAL_DMG"
 hdiutil create \
   -volname "$VOL_NAME" \

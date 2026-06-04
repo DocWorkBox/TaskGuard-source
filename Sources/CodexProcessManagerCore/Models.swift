@@ -59,6 +59,21 @@ public struct ManagedProcess: Identifiable, Hashable {
     public var elapsedSeconds: Int? {
         ElapsedTimeParser.seconds(from: elapsed)
     }
+
+    public func updatingResourceUsage(cpuPercent: Double, memoryPercent: Double) -> ManagedProcess {
+        ManagedProcess(
+            pid: pid,
+            ppid: ppid,
+            user: user,
+            state: state,
+            elapsed: elapsed,
+            cpuPercent: cpuPercent,
+            memoryPercent: memoryPercent,
+            commandLine: commandLine,
+            cwd: cwd,
+            listeningPorts: listeningPorts
+        )
+    }
 }
 
 public enum ThreadHintSource: String, CaseIterable, Hashable {
@@ -213,6 +228,40 @@ public struct ServiceGroup: Identifiable, Hashable {
     public var longestElapsedSeconds: Int {
         processes.compactMap(\.elapsedSeconds).max() ?? 0
     }
+
+    public func updatingResourceUsage(_ usageByPID: [Int32: ProcessResourceUsage]) -> ServiceGroup {
+        ServiceGroup(
+            id: id,
+            title: title,
+            ownership: ownership,
+            cwd: cwd,
+            threadHint: threadHint,
+            processes: processes.map { process in
+                guard let usage = usageByPID[process.pid] else { return process }
+                return process.updatingResourceUsage(
+                    cpuPercent: usage.cpuPercent,
+                    memoryPercent: usage.memoryPercent
+                )
+            },
+            listeningPorts: listeningPorts,
+            risk: risk,
+            confidence: confidence,
+            evidence: evidence,
+            recommendedAction: recommendedAction
+        )
+    }
+}
+
+public struct ProcessResourceUsage: Hashable {
+    public let pid: Int32
+    public let cpuPercent: Double
+    public let memoryPercent: Double
+
+    public init(pid: Int32, cpuPercent: Double, memoryPercent: Double) {
+        self.pid = pid
+        self.cpuPercent = cpuPercent
+        self.memoryPercent = memoryPercent
+    }
 }
 
 public enum KillSignal: String, Hashable {
@@ -316,6 +365,13 @@ public struct ProcessSnapshot: Hashable {
 
     public static var empty: ProcessSnapshot {
         ProcessSnapshot(scannedAt: Date(), groups: [])
+    }
+
+    public func updatingResourceUsage(_ usageByPID: [Int32: ProcessResourceUsage]) -> ProcessSnapshot {
+        ProcessSnapshot(
+            scannedAt: scannedAt,
+            groups: groups.map { $0.updatingResourceUsage(usageByPID) }
+        )
     }
 }
 
