@@ -116,11 +116,11 @@ Windows 托盘只显示盾牌图标。
 
 ### UI 参考图和设计规范
 
-下面两张图是 Windows 端实现参考图，用来固定布局合同；它们不是最终 Windows 运行截图。Windows MVP 做完后，应再用真实截图替换或补充。
+下面两张图是当前 macOS 端真实截图，用来作为 Windows 端 UI 对齐参考。Windows 版本不需要逐像素复刻 macOS 视觉风格，但信息层级、占用率位置、按钮分区、列表密度和详情结构应保持一致。
 
-![Windows 快速面板参考](assets/windows-quick-panel-reference.svg)
+![macOS 快速面板真实截图](assets/macos-quick-panel-reference.png)
 
-![Windows 主窗口参考](assets/windows-main-window-reference.svg)
+![macOS 主窗口真实截图](assets/macos-main-window-reference.png)
 
 资源占用 UI 规范：
 
