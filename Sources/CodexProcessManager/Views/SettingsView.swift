@@ -8,7 +8,7 @@ struct SettingsView: View {
         Form {
             Section("扫描") {
                 HStack {
-                    Slider(value: $preferences.scanIntervalSeconds, in: 2...30, step: 1) {
+                    Slider(value: $preferences.scanIntervalSeconds, in: 60...600, step: 5) {
                         Text("扫描间隔")
                     }
                     Text("\(Int(preferences.scanIntervalSeconds)) 秒")

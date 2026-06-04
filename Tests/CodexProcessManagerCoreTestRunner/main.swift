@@ -367,6 +367,14 @@ func testIgnoresKnownAppHelpersEvenWhenTheyUseDevelopmentPorts() {
             commandLine: "/Applications/QuarkCloudDrive.app/Contents/Frameworks/QuarkCloudDrive Helper.app/Contents/MacOS/QuarkCloudDrive Helper --utility-sub-type=node.quantum.mojom.NodeService",
             cwd: "/Applications/QuarkCloudDrive.app",
             listeningPorts: [9125]
+        ),
+        ManagedProcess.fixture(
+            pid: 9005,
+            ppid: 9004,
+            elapsed: "16-04:58:32",
+            commandLine: "/Applications/微力同步.app/Contents/Resources/verysync --no-browser",
+            cwd: "/Applications/微力同步.app/Contents/Resources",
+            listeningPorts: [3000, 3080, 8886, 18886, 22330]
         )
     ]
 
@@ -409,6 +417,81 @@ func testShellCommandRunnerHandlesLargeOutputWithoutPipeDeadlock() {
         expect(output.contains("20000"), "large command output is fully read")
     } catch {
         failures.append("large command output should not deadlock: \(error)")
+    }
+}
+
+func testProcessSnapshotProviderUsesCwdLookupCooldownForAmbiguousDevProcesses() {
+    final class CountingRunner: CommandRunning {
+        var lsofArguments: [[String]] = []
+
+        func run(_ executable: String, arguments: [String]) throws -> String {
+            if executable == "/bin/ps" {
+                return "1234 1 \(NSUserName()) S 01:00 0.0 0.1 node server.js\n"
+            }
+
+            if executable == "/usr/sbin/lsof" {
+                lsofArguments.append(arguments)
+            }
+
+            if executable == "/usr/sbin/lsof", arguments == ["-nP", "-iTCP", "-sTCP:LISTEN"] {
+                return "node 1234 \(NSUserName()) 22u IPv4 0xabc 0t0 TCP 127.0.0.1:4173 (LISTEN)\n"
+            }
+
+            if executable == "/usr/sbin/lsof", arguments == ["-a", "-p", "1234", "-d", "cwd", "-Fn"] {
+                return "p1234\nn/Users/zhaoke/Documents/Codex/demo\n"
+            }
+
+            return ""
+        }
+    }
+
+    let runner = CountingRunner()
+    let provider = ProcessSnapshotProvider(runner: runner, cwdLookupCooldownSeconds: 60)
+
+    do {
+        let first = try provider.scan(configuration: .testDefault, protectedPIDs: [])
+        let second = try provider.scan(configuration: .testDefault, protectedPIDs: [])
+        expect(
+            runner.lsofArguments == [
+                ["-nP", "-iTCP", "-sTCP:LISTEN"],
+                ["-a", "-p", "1234", "-d", "cwd", "-Fn"],
+                ["-nP", "-iTCP", "-sTCP:LISTEN"]
+            ],
+            "scanner looks up ambiguous cwd once and reuses it inside cooldown"
+        )
+        expect(first.groups.first?.cwd == "/Users/zhaoke/Documents/Codex/demo", "first scan uses cwd lookup")
+        expect(second.groups.first?.cwd == "/Users/zhaoke/Documents/Codex/demo", "second scan reuses cached cwd")
+    } catch {
+        failures.append("provider scan should not fail: \(error)")
+    }
+}
+
+func testProcessSnapshotProviderFastScanSkipsLsof() {
+    final class CountingRunner: CommandRunning {
+        var commands: [String] = []
+
+        func run(_ executable: String, arguments: [String]) throws -> String {
+            commands.append(executable)
+            if executable == "/bin/ps" {
+                return "1234 1 \(NSUserName()) S 01:00 0.0 0.1 node /Users/zhaoke/Documents/Codex/demo/server.js\n"
+            }
+            return ""
+        }
+    }
+
+    let runner = CountingRunner()
+    let provider = ProcessSnapshotProvider(runner: runner)
+
+    do {
+        let snapshot = try provider.scan(
+            configuration: .testDefault,
+            protectedPIDs: [],
+            mode: .fast
+        )
+        expect(runner.commands == ["/bin/ps"], "fast scan only runs ps")
+        expect(snapshot.groups.count == 1, "fast scan still shows command-line matched services")
+    } catch {
+        failures.append("fast provider scan should not fail: \(error)")
     }
 }
 
@@ -493,6 +576,8 @@ testIgnoresProcessesOwnedByOtherUsers()
 testIgnoresKnownAppHelpersEvenWhenTheyUseDevelopmentPorts()
 testKeepsRealNodeDevServerWhenInCodexWorkspaceAndListening()
 testShellCommandRunnerHandlesLargeOutputWithoutPipeDeadlock()
+testProcessSnapshotProviderUsesCwdLookupCooldownForAmbiguousDevProcesses()
+testProcessSnapshotProviderFastScanSkipsLsof()
 
 if failures.isEmpty {
     print("All core behavior tests passed")

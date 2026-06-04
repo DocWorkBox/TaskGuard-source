@@ -1,0 +1,39 @@
+Codex TaskGuard 安装说明
+
+1. 将「Codex TaskGuard」拖入右侧「Applications」文件夹。
+2. 打开「应用程序」文件夹，启动 Codex TaskGuard。
+3. 如果首次打开被 macOS 拦截，请按下面方式处理。
+
+为什么会被拦截
+
+当前测试版使用本地临时签名，尚未使用 Apple Developer ID 正式签名和公证。
+macOS Gatekeeper 可能提示「无法验证开发者」「Apple 无法检查其是否包含恶意软件」或阻止直接打开。
+
+推荐打开方式
+
+方法一：右键打开
+
+1. 在「应用程序」中找到 Codex TaskGuard。
+2. 按住 Control 键点按，或右键点按。
+3. 选择「打开」。
+4. 在弹窗中再次点击「打开」。
+
+方法二：隐私与安全性中允许
+
+1. 双击 Codex TaskGuard，如果系统阻止打开，先关闭提示。
+2. 打开「系统设置」>「隐私与安全性」。
+3. 在底部找到 Codex TaskGuard 的拦截提示。
+4. 点击「仍要打开」。
+
+临时测试命令
+
+如果你确认安装包来源可信，也可以在终端执行：
+
+xattr -dr com.apple.quarantine "/Applications/Codex TaskGuard.app"
+
+然后再次打开应用。
+
+安全说明
+
+Codex TaskGuard 默认只扫描当前用户进程，不使用 sudo。
+关闭进程前会要求确认，优先发送 SIGTERM，不会自动强制结束进程。

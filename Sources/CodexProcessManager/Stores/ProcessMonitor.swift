@@ -17,6 +17,7 @@ final class ProcessMonitor: ObservableObject {
     private let terminator: ProcessTerminator
     private let auditLogger: AuditLogging
     private var timer: Timer?
+    private var startupRefreshTask: Task<Void, Never>?
 
     init(
         preferences: AppPreferences,
@@ -46,10 +47,12 @@ final class ProcessMonitor: ObservableObject {
     func start() {
         guard timer == nil else { return }
         scheduleTimer()
-        Task { await refresh() }
+        scheduleStartupRefresh()
     }
 
     func stop() {
+        startupRefreshTask?.cancel()
+        startupRefreshTask = nil
         timer?.invalidate()
         timer = nil
     }
@@ -59,7 +62,7 @@ final class ProcessMonitor: ObservableObject {
         lastActivity = isPaused ? "已暂停扫描" : "已恢复扫描"
     }
 
-    func refresh() async {
+    func refresh(mode: ProcessScanMode = .full) async {
         guard !isRefreshing else { return }
         isRefreshing = true
         lastError = nil
@@ -69,10 +72,11 @@ final class ProcessMonitor: ObservableObject {
         let provider = provider
 
         do {
-            let newSnapshot = try await Task.detached(priority: .userInitiated) {
+            let newSnapshot = try await Task.detached(priority: .background) {
                 try provider.scan(
                     configuration: configuration,
-                    protectedPIDs: protectedPIDs
+                    protectedPIDs: protectedPIDs,
+                    mode: mode
                 )
             }.value
 
@@ -80,7 +84,9 @@ final class ProcessMonitor: ObservableObject {
             if selectedGroupID == nil || !newSnapshot.groups.contains(where: { $0.id == selectedGroupID }) {
                 selectedGroupID = newSnapshot.groups.first?.id
             }
-            lastActivity = "已扫描 \(newSnapshot.groups.count) 组服务"
+            lastActivity = mode == .fast
+                ? "已快速扫描 \(newSnapshot.groups.count) 组服务"
+                : "已扫描 \(newSnapshot.groups.count) 组服务"
         } catch {
             lastError = error.localizedDescription
             lastActivity = "扫描失败"
@@ -163,11 +169,26 @@ final class ProcessMonitor: ObservableObject {
     }
 
     private func scheduleTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: max(2, preferences.scanIntervalSeconds), repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: max(60, preferences.scanIntervalSeconds), repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
                 guard !self.isPaused else { return }
                 await self.refresh()
+            }
+        }
+    }
+
+    private func scheduleStartupRefresh() {
+        startupRefreshTask?.cancel()
+        lastActivity = "等待首次扫描，可手动刷新"
+        startupRefreshTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            guard !Task.isCancelled else { return }
+
+            await MainActor.run {
+                guard let self, !self.isPaused else { return }
+                self.startupRefreshTask = nil
+                Task { await self.refresh(mode: .fast) }
             }
         }
     }

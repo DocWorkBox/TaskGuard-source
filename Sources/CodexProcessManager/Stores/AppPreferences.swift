@@ -33,8 +33,11 @@ final class AppPreferences: ObservableObject {
         self.defaults = defaults
         let defaultConfig = ScanConfiguration.default
 
-        scanIntervalSeconds = defaults.object(forKey: Keys.scanIntervalSeconds) as? Double
-            ?? defaultConfig.scanIntervalSeconds
+        scanIntervalSeconds = max(
+            60,
+            defaults.object(forKey: Keys.scanIntervalSeconds) as? Double
+                ?? defaultConfig.scanIntervalSeconds
+        )
         portRangeText = defaults.string(forKey: Keys.portRangeText)
             ?? "\(defaultConfig.devPortRange.lowerBound)-\(defaultConfig.devPortRange.upperBound)"
         commandKeywordsText = defaults.string(forKey: Keys.commandKeywordsText)
@@ -48,7 +51,7 @@ final class AppPreferences: ObservableObject {
 
     func makeConfiguration() -> ScanConfiguration {
         ScanConfiguration(
-            scanIntervalSeconds: max(2, scanIntervalSeconds),
+            scanIntervalSeconds: max(60, scanIntervalSeconds),
             devPortRange: parsePortRange(portRangeText),
             devCommandKeywords: lines(from: commandKeywordsText),
             whitelistPatterns: lines(from: whitelistText),

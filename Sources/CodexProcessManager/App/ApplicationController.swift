@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import Darwin
 import SwiftUI
 
 @MainActor
@@ -9,8 +10,10 @@ final class ApplicationController: NSObject, NSWindowDelegate {
     private weak var preferences: AppPreferences?
     private weak var monitor: ProcessMonitor?
     private var statusItem: NSStatusItem?
+    private var statusBadgeLayer: CALayer?
     private var statusPopover: NSPopover?
     private var mainWindow: NSWindow?
+    private var settingsWindow: NSWindow?
     private var cancellables: Set<AnyCancellable> = []
 
     func configure(preferences: AppPreferences, monitor: ProcessMonitor) {
@@ -19,6 +22,7 @@ final class ApplicationController: NSObject, NSWindowDelegate {
     }
 
     func launch() {
+        installLowImpactScheduling()
         NSApp.setActivationPolicy(.regular)
         installApplicationIcon()
         installStatusItem()
@@ -26,6 +30,10 @@ final class ApplicationController: NSObject, NSWindowDelegate {
         showMainWindow()
         monitor?.start()
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func installLowImpactScheduling() {
+        _ = setpriority(PRIO_PROCESS, 0, 20)
     }
 
     func showMainWindow() {
@@ -61,9 +69,17 @@ final class ApplicationController: NSObject, NSWindowDelegate {
     }
 
     func windowWillClose(_ notification: Notification) {
-        guard notification.object as? NSWindow === mainWindow else { return }
-        mainWindow = nil
-        NSApp.setActivationPolicy(.accessory)
+        if notification.object as? NSWindow === mainWindow {
+            mainWindow = nil
+            if settingsWindow == nil {
+                NSApp.setActivationPolicy(.accessory)
+            }
+        } else if notification.object as? NSWindow === settingsWindow {
+            settingsWindow = nil
+            if mainWindow == nil {
+                NSApp.setActivationPolicy(.accessory)
+            }
+        }
     }
 
     private func installApplicationIcon() {
@@ -93,10 +109,22 @@ final class ApplicationController: NSObject, NSWindowDelegate {
             button.action = #selector(statusItemClicked(_:))
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
             button.toolTip = "Codex TaskGuard"
+            installStatusBadge(on: button)
         }
 
         statusItem = item
         updateStatusItem()
+    }
+
+    private func installStatusBadge(on button: NSStatusBarButton) {
+        button.wantsLayer = true
+
+        let badge = CALayer()
+        badge.cornerRadius = 4
+        badge.borderWidth = 1.5
+        badge.borderColor = NSColor.windowBackgroundColor.cgColor
+        button.layer?.addSublayer(badge)
+        statusBadgeLayer = badge
     }
 
     private func installStatusObservers() {
@@ -122,33 +150,28 @@ final class ApplicationController: NSObject, NSWindowDelegate {
     private func updateStatusItem() {
         guard let button = statusItem?.button else { return }
 
+        button.title = ""
+        button.imagePosition = .imageOnly
+        statusItem?.length = 28
+
         if let monitor {
             let summary = monitor.summary
-            let prefix: String
-            if monitor.lastError != nil {
-                prefix = "!"
-            } else if monitor.isPaused {
-                prefix = "||"
-            } else if monitor.isRefreshing {
-                prefix = "..."
-            } else {
-                prefix = "\(summary.serviceCount)"
-            }
-
-            if summary.suggestedCleanupCount > 0 {
-                button.title = " TG \(prefix)/\(summary.suggestedCleanupCount)"
-            } else {
-                button.title = " TG \(prefix)"
-            }
-            button.sizeToFit()
-            statusItem?.length = max(58, min(96, button.intrinsicContentSize.width + 12))
+            updateStatusBadge(hasSuggestedCleanup: summary.suggestedCleanupCount > 0)
             button.toolTip = "Codex TaskGuard：服务 \(summary.serviceCount)，建议 \(summary.suggestedCleanupCount)，端口 \(summary.listeningPortCount)"
         } else {
-            button.title = " TG"
-            button.sizeToFit()
-            statusItem?.length = 58
+            updateStatusBadge(hasSuggestedCleanup: false)
             button.toolTip = "Codex TaskGuard"
         }
+    }
+
+    private func updateStatusBadge(hasSuggestedCleanup: Bool) {
+        guard let button = statusItem?.button, let badge = statusBadgeLayer else { return }
+
+        let badgeSize: CGFloat = 8
+        let x = button.bounds.maxX - badgeSize - 3
+        let y = button.bounds.midY + 2
+        badge.frame = CGRect(x: x, y: y, width: badgeSize, height: badgeSize)
+        badge.backgroundColor = (hasSuggestedCleanup ? NSColor.systemOrange : NSColor.systemGreen).cgColor
     }
 
     @objc private func statusItemClicked(_ sender: Any?) {
@@ -184,9 +207,35 @@ final class ApplicationController: NSObject, NSWindowDelegate {
     }
 
     func showSettingsWindow() {
+        guard let preferences, let monitor else { return }
         NSApp.setActivationPolicy(.regular)
+
+        if let settingsWindow {
+            settingsWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let content = SettingsView()
+            .environmentObject(preferences)
+            .environmentObject(monitor)
+            .frame(width: 620, height: 520)
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 620, height: 520),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "设置"
+        window.center()
+        window.contentViewController = NSHostingController(rootView: content)
+        window.isReleasedWhenClosed = false
+        window.delegate = self
+        window.makeKeyAndOrderFront(nil)
+
+        settingsWindow = window
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 
     @objc func cleanSuggestedFromMenuBar() {

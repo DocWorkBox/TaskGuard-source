@@ -6,6 +6,8 @@ APP_NAME="CodexProcessManager"
 DISPLAY_NAME="Codex TaskGuard"
 BUNDLE_ID="work.doxora.CodexProcessManager"
 MIN_SYSTEM_VERSION="14.0"
+APP_VERSION="1.0.0"
+APP_BUILD="1"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
@@ -18,7 +20,7 @@ INFO_PLIST="$APP_CONTENTS/Info.plist"
 APP_RESOURCES="$APP_CONTENTS/Resources"
 ICON_NAME="TaskGuardIcon"
 ICON_SOURCE="$ROOT_DIR/Assets/IconSources/taskguard-options-board.png"
-BUILD_DIR="$ROOT_DIR/.build"
+BUILD_DIR="$ROOT_DIR/.build-current"
 
 export CLANG_MODULE_CACHE_PATH="$BUILD_DIR/clang-module-cache"
 export SWIFTPM_HOME="$BUILD_DIR/swiftpm-home"
@@ -55,7 +57,13 @@ cat >"$INFO_PLIST" <<PLIST
   <string>$DISPLAY_NAME</string>
   <key>CFBundleDisplayName</key>
   <string>$DISPLAY_NAME</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$APP_VERSION</string>
+  <key>CFBundleVersion</key>
+  <string>$APP_BUILD</string>
   <key>CFBundleIconFile</key>
+  <string>$ICON_NAME</string>
+  <key>CFBundleIconName</key>
   <string>$ICON_NAME</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
@@ -69,11 +77,17 @@ cat >"$INFO_PLIST" <<PLIST
 </plist>
 PLIST
 
+printf "APPL????" >"$APP_CONTENTS/PkgInfo"
+touch "$APP_BUNDLE"
+codesign --force --sign - "$APP_BUNDLE" >/dev/null
+
 open_app() {
   /usr/bin/open -n "$APP_BUNDLE"
 }
 
 case "$MODE" in
+  --bundle|bundle)
+    ;;
   run)
     open_app
     ;;
@@ -94,7 +108,7 @@ case "$MODE" in
     pgrep -x "$APP_NAME" >/dev/null
     ;;
   *)
-    echo "usage: $0 [run|--debug|--logs|--telemetry|--verify]" >&2
+    echo "usage: $0 [run|--bundle|--debug|--logs|--telemetry|--verify]" >&2
     exit 2
     ;;
 esac

@@ -56,6 +56,14 @@ struct ContentView: View {
                 .immediateTooltip(canCloseSelectedGroup ? "关闭当前选中的非保护服务组；执行前会再次确认" : "当前没有可关闭的服务组，或选中项受保护")
                 .disabled(!canCloseSelectedGroup)
                 .help(canCloseSelectedGroup ? "关闭当前选中的非保护服务组；执行前会再次确认" : "当前没有可关闭的服务组，或选中项受保护")
+
+                Button {
+                    ApplicationController.shared.showSettingsWindow()
+                } label: {
+                    Label("设置", systemImage: "gearshape")
+                }
+                .immediateTooltip("打开扫描间隔、识别规则、白名单和关闭流程设置")
+                .help("打开扫描间隔、识别规则、白名单和关闭流程设置")
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -115,6 +123,10 @@ private struct StatusBarView: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            Text("V\(appVersion)")
+                .fontWeight(.medium)
+                .foregroundStyle(.secondary)
+
             if monitor.isRefreshing {
                 ProgressView()
                     .controlSize(.small)
@@ -144,5 +156,9 @@ private struct StatusBarView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(.bar)
+    }
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
     }
 }

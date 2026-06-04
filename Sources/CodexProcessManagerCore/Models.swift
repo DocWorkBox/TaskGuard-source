@@ -282,7 +282,7 @@ public struct ScanConfiguration: Equatable {
 
     public static var `default`: ScanConfiguration {
         ScanConfiguration(
-            scanIntervalSeconds: 5,
+            scanIntervalSeconds: 120,
             devPortRange: 3000...9000,
             devCommandKeywords: [
                 "npm run dev",

@@ -93,6 +93,11 @@ enum ProcessClassifier {
         if isWhitelisted(process, configuration: configuration) {
             return true
         }
+        if isBundledApplicationProcess(process),
+           !belongsToCodexWorkspace(process),
+           !isDevelopmentCommand(process, configuration: configuration) {
+            return false
+        }
         if isDevelopmentCommand(process, configuration: configuration) {
             return true
         }
@@ -114,6 +119,12 @@ enum ProcessClassifier {
         let appHelperMarkers = [
             "/Applications/Google Chrome.app/",
             "/Applications/QuarkCloudDrive.app/",
+            "/Applications/微力同步.app/",
+            "/Applications/VerySync.app/",
+            "/Applications/Syncthing.app/",
+            "/Applications/Dropbox.app/",
+            "/Applications/Google Drive.app/",
+            "/Applications/OneDrive.app/",
             "/Applications/QQMusic.app/",
             "/Applications/WeChat.app/",
             "/Applications/Adobe ",
@@ -127,5 +138,9 @@ enum ProcessClassifier {
         ]
 
         return appHelperMarkers.contains { command.contains($0) }
+    }
+
+    private static func isBundledApplicationProcess(_ process: ManagedProcess) -> Bool {
+        process.commandLine.contains(".app/Contents/")
     }
 }

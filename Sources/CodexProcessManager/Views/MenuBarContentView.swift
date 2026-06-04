@@ -9,8 +9,18 @@ struct MenuBarContentView: View {
         Array(monitor.snapshot.groups.prefix(5))
     }
 
-    private var longRunningCount: Int {
-        monitor.snapshot.groups.filter { $0.longestElapsedSeconds >= 2 * 60 * 60 }.count
+    private var longRunningGroups: [ServiceGroup] {
+        monitor.snapshot.groups.filter {
+            $0.risk != .protected && $0.longestElapsedSeconds >= 2 * 60 * 60
+        }
+    }
+
+    private var totalCPU: Double {
+        monitor.snapshot.groups.reduce(0) { $0 + $1.totalCPU }
+    }
+
+    private var totalMemory: Double {
+        monitor.snapshot.groups.reduce(0) { $0 + $1.totalMemory }
     }
 
     var body: some View {
@@ -80,9 +90,13 @@ struct MenuBarContentView: View {
 
             Spacer()
 
-            if monitor.isRefreshing {
-                ProgressView()
-                    .controlSize(.small)
+            HStack(spacing: 8) {
+                ResourceUsageBadge(cpu: totalCPU, memory: totalMemory)
+
+                if monitor.isRefreshing {
+                    ProgressView()
+                        .controlSize(.small)
+                }
             }
         }
         .padding(14)
@@ -105,8 +119,8 @@ struct MenuBarContentView: View {
         if monitor.summary.highCPUCount > 0 {
             items.append("\(monitor.summary.highCPUCount) 组进程 CPU 偏高")
         }
-        if longRunningCount > 0 {
-            items.append("\(longRunningCount) 组已运行超过 2 小时")
+        if let longest = longRunningGroups.map(\.longestElapsedSeconds).max() {
+            items.append("\(longRunningGroups.count) 组已运行超过 2 小时，最长 \(formatAlertDuration(longest))")
         }
         if monitor.isPaused {
             items.append("自动扫描已暂停")
@@ -188,26 +202,51 @@ struct MenuBarContentView: View {
     }
 
     private var footer: some View {
-        HStack {
+        HStack(spacing: 6) {
+            Button {
+                ApplicationController.shared.showMainWindow()
+                ApplicationController.shared.closeStatusPopover()
+            } label: {
+                footerLabel("打开", systemImage: "macwindow")
+            }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+
             Button {
                 ApplicationController.shared.showSettingsWindow()
                 ApplicationController.shared.closeStatusPopover()
             } label: {
-                Label("设置", systemImage: "gearshape")
+                footerLabel("设置", systemImage: "gearshape")
             }
             .buttonStyle(.plain)
-
-            Spacer()
+            .contentShape(Rectangle())
 
             Button {
                 ApplicationController.shared.quit()
             } label: {
-                Label("退出", systemImage: "power")
+                footerLabel("退出", systemImage: "power")
             }
             .buttonStyle(.plain)
+            .contentShape(Rectangle())
         }
         .font(.caption)
         .foregroundStyle(.secondary)
+    }
+
+    private func footerLabel(_ title: String, systemImage: String) -> some View {
+        Label(title, systemImage: systemImage)
+            .labelStyle(.titleAndIcon)
+            .frame(maxWidth: .infinity, minHeight: 36, alignment: .center)
+            .contentShape(Rectangle())
+    }
+
+    private func formatAlertDuration(_ seconds: Int) -> String {
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        if hours > 0 {
+            return minutes > 0 ? "\(hours)h \(minutes)m" : "\(hours)h"
+        }
+        return "\(minutes)m"
     }
 }
 
@@ -252,9 +291,12 @@ private struct MenuGroupRow: View {
 
             Spacer()
 
+            ResourceUsageBadge(cpu: group.totalCPU, memory: group.totalMemory)
+
             Text(group.risk.displayName)
                 .font(.caption2.weight(.medium))
                 .foregroundStyle(iconColor)
+                .frame(width: 44, alignment: .trailing)
         }
         .contentShape(Rectangle())
     }
@@ -285,5 +327,35 @@ private struct MenuGroupRow: View {
         case .needsReview: return .blue
         case .protected: return .secondary
         }
+    }
+}
+
+private struct ResourceUsageBadge: View {
+    let cpu: Double
+    let memory: Double
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            usageLine(title: "CPU", value: cpu)
+            usageLine(title: "内存", value: memory)
+        }
+        .font(.caption2.monospacedDigit())
+        .foregroundStyle(.secondary)
+        .frame(width: 86, alignment: .trailing)
+        .accessibilityLabel("CPU \(format(cpu))，内存 \(format(memory))")
+    }
+
+    private func usageLine(title: String, value: Double) -> some View {
+        HStack(spacing: 4) {
+            Text(title)
+                .foregroundStyle(.tertiary)
+            Text(format(value))
+                .fontWeight(value >= 25 ? .semibold : .medium)
+                .foregroundStyle(value >= 25 ? Color.orange : Color.secondary)
+        }
+    }
+
+    private func format(_ value: Double) -> String {
+        String(format: "%.1f%%", value)
     }
 }
