@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="860" viewBox="0 0 1440 860" role="img" aria-labelledby="title desc">
+  <title id="title">Windows main window resource usage reference</title>
+  <desc id="desc">Codex TaskGuard Windows main window layout reference with left navigation, service group list, detail panel, per-group resource usage, and per-process resource usage.</desc>
+  <rect width="1440" height="860" rx="22" fill="#fbfbfa"/>
+  <rect x="1" y="1" width="1438" height="858" rx="22" fill="none" stroke="#d6d8d4"/>
+
+  <g transform="translate(28 30)">
+    <circle cx="10" cy="10" r="10" fill="#ff5f57"/>
+    <circle cx="42" cy="10" r="10" fill="#ffbd2e"/>
+    <circle cx="74" cy="10" r="10" fill="#28c840"/>
+    <text x="128" y="18" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="700" fill="#3f443d">Codex TaskGuard</text>
+  </g>
+
+  <line x1="0" y1="74" x2="1440" y2="74" stroke="#dfdfdc"/>
+  <line x1="282" y1="74" x2="282" y2="824" stroke="#e4e4e1"/>
+  <line x1="724" y1="74" x2="724" y2="824" stroke="#e4e4e1"/>
+  <line x1="0" y1="824" x2="1440" y2="824" stroke="#e4e4e1"/>
+
+  <g transform="translate(24 100)" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">
+    <rect width="230" height="48" rx="9" fill="#dedfdb"/>
+    <text x="30" y="31" font-size="22" font-weight="700" fill="#202220">全部</text>
+    <text x="204" y="31" text-anchor="end" font-size="21" font-weight="700" fill="#777b74">8</text>
+
+    <text x="30" y="94" font-size="20" font-weight="650" fill="#252825">Codex 线程</text>
+    <text x="204" y="94" text-anchor="end" font-size="20" fill="#777b74">4</text>
+    <text x="30" y="144" font-size="20" font-weight="650" fill="#252825">开发服务</text>
+    <text x="204" y="144" text-anchor="end" font-size="20" fill="#777b74">0</text>
+    <text x="30" y="194" font-size="20" font-weight="650" fill="#252825">疑似残留</text>
+    <text x="204" y="194" text-anchor="end" font-size="20" fill="#777b74">0</text>
+    <text x="30" y="244" font-size="20" font-weight="650" fill="#252825">监听端口</text>
+    <text x="204" y="244" text-anchor="end" font-size="20" fill="#777b74">5</text>
+    <text x="30" y="294" font-size="20" font-weight="650" fill="#252825">白名单</text>
+    <text x="204" y="294" text-anchor="end" font-size="20" fill="#777b74">2</text>
+  </g>
+
+  <g transform="translate(318 112)">
+    <g>
+      <text x="0" y="24" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="23" font-weight="750" fill="#252825">Codex Desktop 支撑进程</text>
+      <text x="0" y="58" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" fill="#858982">Codex 支撑进程  1 进程</text>
+      <text x="0" y="92" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="17" fill="#858982">/Applications/Codex.app/Contents/Resources/...</text>
+      <text x="296" y="24" text-anchor="end" font-family="SFMono-Regular,Consolas,monospace" font-size="15" fill="#767b73">CPU 0.0%</text>
+      <text x="296" y="50" text-anchor="end" font-family="SFMono-Regular,Consolas,monospace" font-size="15" fill="#767b73">内存 0.1%</text>
+      <rect x="320" y="0" width="72" height="34" rx="17" fill="#e1f0ff"/>
+      <text x="356" y="23" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" font-weight="700" fill="#0878ff">需确认</text>
+      <line x1="0" y1="112" x2="396" y2="112" stroke="#e7e7e4"/>
+    </g>
+
+    <g transform="translate(0 134)">
+      <text x="0" y="24" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="23" font-weight="750" fill="#252825">Data Analytics 插件</text>
+      <text x="0" y="58" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" fill="#858982">Codex 支撑进程  2 进程</text>
+      <text x="0" y="92" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="17" fill="#858982">/Users/.../.codex/plugins/cache/...</text>
+      <text x="296" y="24" text-anchor="end" font-family="SFMono-Regular,Consolas,monospace" font-size="15" fill="#767b73">CPU 0.2%</text>
+      <text x="296" y="50" text-anchor="end" font-family="SFMono-Regular,Consolas,monospace" font-size="15" fill="#767b73">内存 0.4%</text>
+      <rect x="320" y="0" width="72" height="34" rx="17" fill="#e1f0ff"/>
+      <text x="356" y="23" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" font-weight="700" fill="#0878ff">需确认</text>
+      <line x1="0" y1="112" x2="396" y2="112" stroke="#e7e7e4"/>
+    </g>
+
+    <g transform="translate(0 268)">
+      <rect x="-12" y="-12" width="420" height="116" rx="10" fill="#0878ff"/>
+      <text x="0" y="24" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="23" font-weight="750" fill="#ffffff">Codex TaskGuard</text>
+      <text x="0" y="58" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" fill="#ddecff">受保护  1 进程</text>
+      <text x="0" y="92" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="17" fill="#ddecff">/Users/.../dist/Codex TaskGuard.app/...</text>
+      <text x="296" y="24" text-anchor="end" font-family="SFMono-Regular,Consolas,monospace" font-size="15" fill="#ddecff">CPU 0.3%</text>
+      <text x="296" y="50" text-anchor="end" font-family="SFMono-Regular,Consolas,monospace" font-size="15" fill="#ddecff">内存 0.6%</text>
+      <rect x="320" y="0" width="72" height="34" rx="17" fill="#2b8eff"/>
+      <text x="356" y="23" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" font-weight="700" fill="#ffffff">受保护</text>
+    </g>
+  </g>
+
+  <g transform="translate(772 118)" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">
+    <text x="0" y="32" font-size="31" font-weight="780" fill="#252825">Codex Desktop 支撑进程</text>
+    <text x="0" y="68" font-size="21" fill="#888c85">Codex 支撑进程</text>
+    <rect x="656" y="0" width="82" height="34" rx="17" fill="#e1f0ff"/>
+    <text x="697" y="23" text-anchor="middle" font-size="16" font-weight="700" fill="#0878ff">需确认</text>
+
+    <g transform="translate(0 116)">
+      <text x="0" y="0" font-size="16" font-weight="650" fill="#858982">进程</text>
+      <text x="0" y="34" font-size="24" fill="#252825">1</text>
+      <text x="180" y="0" font-size="16" font-weight="650" fill="#858982">端口</text>
+      <text x="180" y="34" font-size="24" fill="#252825">-</text>
+      <text x="360" y="0" font-size="16" font-weight="650" fill="#858982">CPU</text>
+      <text x="360" y="34" font-size="24" fill="#252825">0.0%</text>
+      <text x="540" y="0" font-size="16" font-weight="650" fill="#858982">内存</text>
+      <text x="540" y="34" font-size="24" fill="#252825">0.1%</text>
+    </g>
+
+    <g transform="translate(0 214)">
+      <rect width="312" height="158" rx="12" fill="#f0f0ef"/>
+      <text x="28" y="46" font-size="23" font-weight="750" fill="#252825">关闭建议</text>
+      <text x="28" y="88" font-size="22" font-weight="700" fill="#252825">手动选择</text>
+      <text x="28" y="124" font-size="17" fill="#858982">需要人工确认后关闭。</text>
+    </g>
+
+    <g transform="translate(0 410)">
+      <rect width="760" height="188" rx="12" fill="#f0f0ef"/>
+      <text x="28" y="46" font-size="23" font-weight="750" fill="#252825">进程树</text>
+      <text x="28" y="92" font-size="24" font-weight="780" fill="#252825">PID 62,331</text>
+      <text x="150" y="92" font-size="17" font-weight="650" fill="#8a8e86">PPID 62,288</text>
+      <text x="28" y="126" font-family="SFMono-Regular,Consolas,monospace" font-size="17" fill="#333733">/Applications/Codex.app/Contents/Resources/codex app-server --listen stdio://</text>
+      <text x="560" y="92" text-anchor="end" font-family="SFMono-Regular,Consolas,monospace" font-size="15" fill="#767b73">CPU 0.0%</text>
+      <text x="560" y="118" text-anchor="end" font-family="SFMono-Regular,Consolas,monospace" font-size="15" fill="#767b73">内存 0.1%</text>
+      <text x="28" y="160" font-size="17" fill="#858982">用户 zhaoke   状态 S   运行 01:37:02</text>
+    </g>
+  </g>
+
+  <text x="18" y="850" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" fill="#8a8e86">V1.0.0</text>
+  <text x="1290" y="850" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" fill="#252825">服务 8   建议 0   端口 5</text>
+</svg>
